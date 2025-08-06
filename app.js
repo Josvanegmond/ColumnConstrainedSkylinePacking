@@ -92,40 +92,6 @@ class GridLayoutApplet {
         this.displayPackingResults(originalItems, this.items);
     }
 
-
-
-    synchronizePositions() {
-        // Ensure all visual positions match logical positions
-        this.items.forEach(item => {
-            const element = document.querySelector(`[data-item-id="${item.id}"]`);
-            if (element) {
-                this.animationManager.resetElementPosition(element);
-                item.visualRow = item.row;
-            }
-        });
-    }
-
-    updateItemGridPosition(item, itemElement) {
-        const row = item.row !== undefined ? item.row + 1 : 1;
-        itemElement.style.gridRow = `${row}`;
-        itemElement.style.gridColumn = `${item.startcol} / span ${item.colspan}`;
-    }
-
-    setButtonsEnabled(enabled) {
-        const buttons = document.querySelectorAll('button');
-        buttons.forEach(button => {
-            button.disabled = !enabled;
-            button.style.opacity = enabled ? '1' : '0.6';
-            button.style.cursor = enabled ? 'pointer' : 'not-allowed';
-        });
-        
-        const sliders = document.querySelectorAll('.slider');
-        sliders.forEach(slider => {
-            slider.disabled = !enabled;
-            slider.style.opacity = enabled ? '1' : '0.6';
-        });
-    }
-
     shuffleItems() {
         if (this.items.length === 0) {
             this.showMessage('No items to shuffle. Generate a grid first!');
@@ -143,11 +109,6 @@ class GridLayoutApplet {
         document.getElementById('dataDisplay').style.display = 'none';
     }
 
-    updateGridTemplate() {
-        const gridDisplay = document.getElementById('gridDisplay');
-        const rowCount = this.getMaxRow() + 1;
-        gridDisplay.style.gridTemplateRows = `repeat(${rowCount}, minmax(97px, auto))`;
-    }
 
     displayGrid() {
         const gridDisplay = document.getElementById('gridDisplay');

@@ -11,11 +11,9 @@ class PackingAlgorithm {
         while (queue.length > 0) {
             const currentItem = queue.shift();
             
-            let itemMoved = false;
             for (let targetRow = 0; targetRow < currentItem.row; targetRow++) {
                 if (this.hasMatchingEmptySpace(currentItem, packedItems, targetRow)) {
                     currentItem.row = targetRow;
-                    itemMoved = true;
                     break;
                 }
                 
@@ -23,7 +21,6 @@ class PackingAlgorithm {
                 if (swapCandidate) {
                     [currentItem.row, swapCandidate.row] = [swapCandidate.row, currentItem.row];
                     queue.push(swapCandidate);
-                    itemMoved = true;
                     break;
                 }
             }
@@ -51,12 +48,6 @@ class PackingAlgorithm {
             const otherItems = _.filter(itemsInRow, o => o.id !== candidate.id);
             return !_.some(otherItems, o => this.columnsOverlap(currentColumns, this.getItemColumns(o)));
         });
-    }
-
-    canItemFitInRow(item, allItems, targetRow) {
-        const itemColumns = this.getItemColumns(item);
-        const itemsInRow = _.filter(allItems, o => o.row === targetRow && o.id !== item.id);
-        return !_.some(itemsInRow, o => this.columnsOverlap(itemColumns, this.getItemColumns(o)));
     }
 
     sortItemsByRowDensity(items) {
@@ -101,7 +92,7 @@ class PackingAlgorithm {
             originalDensity: Math.round(originalDensity * 100),
             packedDensity: Math.round(packedDensity * 100),
             densityImprovement: Math.round((packedDensity - originalDensity) * 100),
-            swapsPerformed: _.sumBy(originalItems, (originalItem, index) => {
+            swapsPerformed: _.sumBy(originalItems, (originalItem) => {
                 const packedItem = _.find(packedItems, { id: originalItem.id });
                 return packedItem && (packedItem.startcol !== originalItem.startcol || packedItem.colspan !== originalItem.colspan) ? 1 : 0;
             }) / 2
