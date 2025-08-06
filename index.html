@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grid Layout Applet</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Grid Layout Generator</h1>
+        
+        <div class="controls">
+            <div class="slider-group">
+                <label for="columnSlider">Columns: <span id="columnValue">4</span></label>
+                <input type="range" id="columnSlider" min="2" max="12" value="4" class="slider">
+            </div>
+            
+            <div class="slider-group">
+                <label for="itemSlider">Items: <span id="itemValue">6</span></label>
+                <input type="range" id="itemSlider" min="1" max="20" value="6" class="slider">
+            </div>
+            
+            <div class="button-group">
+                <button id="generateBtn">Generate Grid</button>
+                <button id="packBtn">Pack Items</button>
+                <button id="shuffleBtn">Shuffle Items</button>
+                <button id="clearBtn">Clear</button>
+            </div>
+        </div>
+        
+        <div class="grid-container">
+            <div id="gridDisplay"></div>
+        </div>
+        
+        <div class="data-info">
+            <div id="dataDisplay"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+    <script src="packing-algorithm.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
