@@ -1,3 +1,4 @@
+
 class GridLayoutApplet {
     constructor() {
         this.items = [];
@@ -72,7 +73,7 @@ class GridLayoutApplet {
         this.displayItemData();
     }
 
-    async packItems() {
+    packItems() {
         if (this.items.length === 0) {
             this.showMessage('No items to pack. Generate a grid first!');
             return;
@@ -82,221 +83,32 @@ class GridLayoutApplet {
             this.packingAlgorithm = new PackingAlgorithm(this.columnCount);
         }
         
-        this.setButtonsEnabled(false);
         const originalItems = [...this.items];
         
-        await this.animatePackingAlgorithm();
-
+        // Run packing algorithm immediately without animation
+        this.items = this.packingAlgorithm.packItems(this.items);
+        
+        this.displayGrid();
         this.displayPackingResults(originalItems, this.items);
-        this.setButtonsEnabled(true);
     }
 
-    async animatePackingAlgorithm() {
-        // Initialize items with their original row positions
-        const packedItems = this.items.map((item, index) => ({
-            ...item,
-            row: index
-        }));
-        
-        this.items = packedItems;
-        this.displayGrid();
-        
-        // Wait a moment to show initial state
-        await this.delay(500);
-        
-        // Part 1: Process items in queue, adding swapped items back to queue
-        const queue = [...packedItems];
-        let processedCount = 0;
-        
-        while (queue.length > 0) {
-            const currentItem = queue.shift();
-            processedCount++;
-            
-            // Show queue status periodically
-            // if (processedCount % 5 === 0 && queue.length > 0) {
-            //     this.showMessage(`Part 1: Processing item ${processedCount}, ${queue.length} items remaining in queue...`);
-            //     await this.delay(600);
-            //     this.displayGrid();
-            // }
-            
-            // Highlight the current item being processed
-            await this.highlightItem(currentItem);
-            
-            let itemMoved = false;
-            
-            for (let targetRow = 0; targetRow < currentItem.row; targetRow++) {
-                // Check if there's matching empty space
-                if (this.packingAlgorithm.hasMatchingEmptySpace(currentItem, packedItems, targetRow)) {
-                    await this.animateItemMove(currentItem, targetRow);
-                    itemMoved = true;
-                    break;
-                }
-                
-                // Check for smaller items to swap with
-                const swapCandidate = this.packingAlgorithm.findSmallerItemToSwap(currentItem, packedItems, targetRow);
-                if (swapCandidate) {
-                    await this.animateItemSwap(currentItem, swapCandidate);
-                    // Add the swapped item back to the queue for re-processing
-                    queue.push(swapCandidate);
-                    itemMoved = true;
-                    break;
-                }
+
+
+    synchronizePositions() {
+        // Ensure all visual positions match logical positions
+        this.items.forEach(item => {
+            const element = document.querySelector(`[data-item-id="${item.id}"]`);
+            if (element) {
+                this.animationManager.resetElementPosition(element);
+                item.visualRow = item.row;
             }
-            
-            // Remove highlight and add small delay if item didn't move
-            await this.removeHighlight(currentItem);
-            if (!itemMoved) {
-                await this.delay(200); // Brief pause to show this item was processed but couldn't move
-            }
-        }
-        
-        // Sort rows by density with animation
-        await this.animateRowSorting(packedItems);
+        });
     }
 
-    async animateItemMove(item, newRow) {
-        const oldRow = item.row;
-        const itemElement = document.querySelector(`[data-item-id="${item.id}"]`);
-        if (!itemElement) return;
-        
-        itemElement.classList.add('animating');
-        
-        // Calculate distance using the known row height (97px + 8px gap = 105px)
-        const rowHeight = 105;
-        const distance = (newRow - oldRow) * rowHeight;
-        
-        // Apply the transform
-        itemElement.style.transform = `translateY(${distance}px)`;
-        
-        // Wait for animation to complete
-        await this.delay(200);
-        
-        // Update the item's row
-        item.row = newRow;
-        
-        // Remove transform and animating class
-        itemElement.style.transform = '';
-        itemElement.classList.remove('animating');
-        
-        // Redisplay grid with new positions
-        this.displayGrid();
-        
-        // Small delay between moves
-        await this.delay(200);
-    }
-
-    async animateItemSwap(itemA, itemB) {
-        const itemAElement = document.querySelector(`[data-item-id="${itemA.id}"]`);
-        const itemBElement = document.querySelector(`[data-item-id="${itemB.id}"]`);
-        
-        if (!itemAElement || !itemBElement) return;
-        
-        // Add animating classes
-        itemAElement.classList.add('animating');
-        itemBElement.classList.add('animating');
-        
-        // Calculate distances using known row height
-        const rowHeight = 105;
-        const distanceA = (itemB.row - itemA.row) * rowHeight;
-        const distanceB = (itemA.row - itemB.row) * rowHeight;
-        
-        // Apply transforms
-        itemAElement.style.transform = `translateY(${distanceA}px)`;
-        itemBElement.style.transform = `translateY(${distanceB}px)`;
-        
-        // Wait for animation to complete
-        await this.delay(200);
-        
-        // Swap the row values
-        [itemA.row, itemB.row] = [itemB.row, itemA.row];
-        
-        // Remove transforms and animating classes
-        itemAElement.style.transform = '';
-        itemBElement.style.transform = '';
-        itemAElement.classList.remove('animating');
-        itemBElement.classList.remove('animating');
-        
-        this.displayGrid();
-        
-        // Small delay between moves
-        await this.delay(200);
-    }
-
-    async animateRowSorting(items) {
-        const sortedItems = this.packingAlgorithm.sortItemsByRowDensity(items);
-        
-        // Only animate if the order actually changed
-        const hasChanged = sortedItems.some((item, index) => 
-            items.find(i => i.id === item.id).row !== item.row
-        );
-        
-        if (hasChanged) {
-            // Store current positions before applying transforms
-            const itemPositions = new Map();
-            
-            // Apply all transforms first using measured distances
-            for (const sortedItem of sortedItems) {
-                const originalItem = items.find(i => i.id === sortedItem.id);
-                if (originalItem.row !== sortedItem.row) {
-                    const itemElement = document.querySelector(`[data-item-id="${sortedItem.id}"]`);
-                    if (itemElement) {
-                        // Get current position
-                        const currentRect = itemElement.getBoundingClientRect();
-                        
-                        // Temporarily update the grid to see target position
-                        const originalRow = itemElement.style.gridRow;
-                        itemElement.style.gridRow = sortedItem.row + 1;
-                        
-                        // Force layout and get target position
-                        itemElement.offsetHeight;
-                        const targetRect = itemElement.getBoundingClientRect();
-                        
-                        // Restore original position for animation
-                        itemElement.style.gridRow = originalRow;
-                        
-                        // Calculate and apply transform
-                        const distance = targetRect.top - currentRect.top;
-                        itemElement.classList.add('animating');
-                        itemElement.style.transform = `translateY(${distance}px)`;
-                    }
-                }
-            }
-            
-            // Wait for animation
-            await this.delay(200);
-            
-            // Clean up transforms and update items
-            for (const item of sortedItems) {
-                const itemElement = document.querySelector(`[data-item-id="${item.id}"]`);
-                if (itemElement) {
-                    itemElement.style.transform = '';
-                    itemElement.classList.remove('animating');
-                }
-            }
-            
-            // Update items and redisplay
-            this.items = sortedItems;
-            this.displayGrid();
-        }
-    }
-
-    async highlightItem(item) {
-        const itemElement = document.querySelector(`[data-item-id="${item.id}"]`);
-        if (itemElement) {
-            itemElement.classList.add('processing');
-            await this.delay(400); // Duration of highlight animation
-        }
-    }
-
-    async removeHighlight(item) {
-        const itemElement = document.querySelector(`[data-item-id="${item.id}"]`);
-        if (itemElement) {
-            itemElement.classList.remove('processing');
-        }
-    }
-
-    delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+    updateItemGridPosition(item, itemElement) {
+        const row = item.row !== undefined ? item.row + 1 : 1;
+        itemElement.style.gridRow = `${row}`;
+        itemElement.style.gridColumn = `${item.startcol} / span ${item.colspan}`;
     }
 
     setButtonsEnabled(enabled) {
@@ -329,6 +141,12 @@ class GridLayoutApplet {
         this.items = [];
         document.getElementById('gridDisplay').innerHTML = '<div class="empty-state">Grid cleared. Generate a new grid to continue.</div>';
         document.getElementById('dataDisplay').style.display = 'none';
+    }
+
+    updateGridTemplate() {
+        const gridDisplay = document.getElementById('gridDisplay');
+        const rowCount = this.getMaxRow() + 1;
+        gridDisplay.style.gridTemplateRows = `repeat(${rowCount}, minmax(97px, auto))`;
     }
 
     displayGrid() {

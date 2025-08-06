@@ -65,9 +65,15 @@ class PackingAlgorithm {
             occupiedColumns: new Set(_.flatten(_.map(rowItems, item => this.getItemColumns(item))))
         }));
 
-        const sortedRows = _.sortBy(_.keys(rowData), rowKey => 
-            this.columnCount - rowData[rowKey].occupiedColumns.size
-        );
+        const sortedRows = _.sortBy(_.keys(rowData), rowKey => {
+            const occupiedColumns = rowData[rowKey].occupiedColumns;
+            const emptySpaces = this.columnCount - occupiedColumns.size;
+            
+            // Secondary sort: calculate leftmost fill score (lower is better = more left-filled)
+            const leftmostFillScore = _.min([...occupiedColumns]) || this.columnCount;
+            
+            return [emptySpaces, leftmostFillScore];
+        });
 
         return _.flatten(_.map(sortedRows, (oldRow, newRowIndex) => 
             _.map(rowData[oldRow].items, item => ({ ...item, row: newRowIndex }))
