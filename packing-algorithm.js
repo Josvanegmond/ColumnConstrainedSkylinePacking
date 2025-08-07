@@ -60,8 +60,21 @@ class PackingAlgorithm {
             const occupiedColumns = rowData[rowKey].occupiedColumns;
             const emptySpaces = this.columnCount - occupiedColumns.size;
             
-            // Secondary sort: calculate leftmost fill score (lower is better = more left-filled)
-            const leftmostFillScore = _.min([...occupiedColumns]) || this.columnCount;
+            // Secondary sort: only prioritize leftmost fill if leftmost items are big enough
+            let leftmostFillScore = this.columnCount; // Default (no preference)
+            
+            const minColumn = _.min([...occupiedColumns]);
+            if (minColumn === 1) { // Row starts from leftmost column
+                const rowItems = rowData[rowKey].items;
+                const leftmostItems = rowItems.filter(item => item.startcol === 1);
+                const maxLeftmostSpan = _.max(leftmostItems.map(item => item.colspan)) || 0;
+                const maxOverallSpan = _.max(rowItems.map(item => item.colspan)) || 0;
+                
+                // Only give leftmost preference if leftmost items are at least as big as biggest items
+                if (maxLeftmostSpan >= maxOverallSpan) {
+                    leftmostFillScore = minColumn;
+                }
+            }
             
             return [emptySpaces, leftmostFillScore];
         });

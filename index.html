@@ -3,43 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grid Layout Applet</title>
+    <title>Column Constrained Skyline Packing - Interactive Grid Layout Tool</title>
+    <meta name="description" content="Interactive tool for demonstrating column-constrained skyline packing algorithms with drag-and-drop functionality">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Grid Layout Generator</h1>
-        
-        <div class="controls">
-            <div class="slider-group">
-                <label for="columnSlider">Columns: <span id="columnValue">4</span></label>
-                <input type="range" id="columnSlider" min="2" max="12" value="4" class="slider">
-            </div>
-            
-            <div class="slider-group">
-                <label for="itemSlider">Items: <span id="itemValue">6</span></label>
-                <input type="range" id="itemSlider" min="1" max="20" value="6" class="slider">
-            </div>
-            
-            <div class="button-group">
-                <button id="generateBtn">Generate Grid</button>
-                <button id="packBtn">Pack Items</button>
-                <button id="shuffleBtn">Shuffle Items</button>
-                <button id="clearBtn">Clear</button>
-            </div>
-        </div>
-        
-        <div class="grid-container">
-            <div id="gridDisplay"></div>
-        </div>
-        
-        <div class="data-info">
-            <div id="dataDisplay"></div>
-        </div>
+    <div class="skip-link">
+        <a href="#main-content" class="sr-only sr-only-focusable">Skip to main content</a>
     </div>
+    <main id="main-content" class="container" role="main">
+        <header class="app-header">
+            <h1 id="app-title">Column Constrained Skyline Packing</h1>
+            <p class="app-description">Interactive demonstration of grid layout algorithms with drag-and-drop functionality</p>
+        </header>
+        
+        <section class="controls" aria-labelledby="controls-heading">
+            <h2 id="controls-heading" class="sr-only">Layout Controls</h2>
+            <div class="slider-group">
+                <label for="columnSlider">Grid Columns: <span id="columnValue" aria-live="polite">4</span></label>
+                <input type="range" id="columnSlider" min="2" max="12" value="4" class="slider" 
+                       aria-describedby="column-help" 
+                       aria-label="Set number of grid columns from 2 to 12">
+                <div id="column-help" class="sr-only">Use arrow keys or drag to adjust the number of columns in the grid</div>
+            </div>
+            
+            <div class="slider-group">
+                <label for="itemSlider">Number of Items: <span id="itemValue" aria-live="polite">6</span></label>
+                <input type="range" id="itemSlider" min="1" max="20" value="6" class="slider" 
+                       aria-describedby="item-help" 
+                       aria-label="Set number of items to generate from 1 to 20">
+                <div id="item-help" class="sr-only">Use arrow keys or drag to adjust the number of items to generate</div>
+            </div>
+            
+            <div class="button-group" role="group" aria-labelledby="action-buttons">
+                <span id="action-buttons" class="sr-only">Action Buttons</span>
+                <button id="generateBtn" type="button" aria-describedby="generate-help">
+                    <span class="btn-text">Generate Grid</span>
+                </button>
+                <div id="generate-help" class="sr-only">Creates a new grid with randomly positioned items</div>
+                
+                <button id="packBtn" type="button" aria-describedby="pack-help">
+                    <span class="btn-text">Pack Items</span>
+                </button>
+                <div id="pack-help" class="sr-only">Applies skyline packing algorithm to optimize item placement</div>
+                
+                <button id="shuffleBtn" type="button" aria-describedby="shuffle-help">
+                    <span class="btn-text">Shuffle Items</span>
+                </button>
+                <div id="shuffle-help" class="sr-only">Randomly rearranges existing items in the grid</div>
+                
+                <button id="clearBtn" type="button" aria-describedby="clear-help">
+                    <span class="btn-text">Clear Grid</span>
+                </button>
+                <div id="clear-help" class="sr-only">Removes all items from the grid</div>
+            </div>
+        </section>
+        
+        <section class="grid-container" aria-labelledby="grid-heading">
+            <h2 id="grid-heading" class="sr-only">Interactive Grid Layout</h2>
+            <div id="gridDisplay" 
+                 role="grid" 
+                 aria-label="Interactive grid layout with draggable items" 
+                 aria-describedby="grid-instructions"
+                 tabindex="0"></div>
+            <div id="grid-instructions" class="sr-only">
+                Items can be dragged to reposition. Use Tab to navigate between items, Enter to select, and arrow keys to move selected items.
+            </div>
+            
+            <div class="add-item-form" role="form" aria-labelledby="add-item-heading">
+                <h3 id="add-item-heading">Add New Item</h3>
+                <div class="form-row">
+                    <label for="newItemCol">Starting Column:</label>
+                    <select id="newItemCol" aria-describedby="col-help">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                    </select>
+                    <div id="col-help" class="form-help">Choose which column the item should start in</div>
+                </div>
+                <div class="form-row">
+                    <label for="newItemSpan">Column Span:</label>
+                    <select id="newItemSpan" aria-describedby="span-help">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                    </select>
+                    <div id="span-help" class="form-help">Choose how many columns the item should span</div>
+                </div>
+                <div class="form-row">
+                    <label for="newItemRow">Row Position:</label>
+                    <input type="number" id="newItemRow" min="1" value="1" aria-describedby="row-help">
+                    <div id="row-help" class="form-help">Enter the row number where the item should be placed</div>
+                </div>
+                <button id="addItemBtn" type="button" class="add-item-btn" aria-describedby="add-help">
+                    <span class="btn-text">Add Item</span>
+                </button>
+                <div id="add-help" class="sr-only">Adds a new item to the grid with the specified properties</div>
+            </div>
+        </section>
+        
+        <section class="data-info" aria-labelledby="stats-heading">
+            <h2 id="stats-heading" class="sr-only">Packing Statistics</h2>
+            <div id="dataDisplay" 
+                 role="log" 
+                 aria-live="polite" 
+                 aria-label="Packing algorithm results and statistics"></div>
+        </section>
+    </main>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
     <script src="packing-algorithm.js"></script>
